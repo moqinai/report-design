@@ -1,11 +1,15 @@
 import Vue from 'vue'
+import 'normalize.css/normalize.css' // A modern alternative to CSS resets
+
 import ElementUI from 'element-ui'
 import 'element-ui/lib/theme-chalk/index.css'
 import '@/assets/css/element-variables.scss' // 引入自定义主题色
+
+import '@/styles/index.scss' // global css
+
 import App from './App.vue'
 import router from './router'
 import store from './store'
-import './assets/css/common.css'
 
 import * as filters from './filters' // global filters 全局过滤器
 

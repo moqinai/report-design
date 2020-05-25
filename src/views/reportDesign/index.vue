@@ -94,8 +94,8 @@
 </template>
 
 <script type='text/ecmascript-6'>
-import { getReportListNew, getDataListByReportId, getDataSourceList, delDataSet } from '@/api/customreport.js' // getDataListByReportId
-import { saveReportCols, saveReport, getReportDetailInfoNew } from '@/api/api'
+// import { getReportListNew, getDataListByReportId, getDataSourceList, delDataSet } from '@/api/customreport.js' // getDataListByReportId
+import { saveReportCols, saveReport, getReportDetailInfoNew, getReportListNew, getDataListByReportId, getDataSourceList, delDataSet } from '@/api/api'
 import mineReport from './components/mineReport'
 import contentReport from './components/contentReport'
 import reportDataSet from './components/reportDataSet'
