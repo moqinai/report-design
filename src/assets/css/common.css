@@ -1,0 +1,167 @@
+/* reset.css start */
+@charset "utf-8";
+body,div,p,h1,h2,h3,h4,h5,h6,textarea,ul,ol,li,dl,dt,dd,th,td,nav,article,header,aside,footer,section,figcaption,figure{
+	margin: 0;
+	padding: 0;
+	box-sizing: border-box;
+}
+/* Add the correct display in IE 9-.*/
+article,
+aside,
+footer,
+header,
+nav,
+figcaption,
+figure,
+main {
+  display: block;
+}
+audio,
+video {
+  display: inline-block;
+}
+
+
+:after,
+:before {
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  -ms-box-sizing: border-box;
+  box-sizing: border-box
+}
+html {
+  -webkit-text-size-adjust: 100%;
+  -ms-text-size-adjust: 100%;
+  font-size: 10px;
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0)
+}
+body {	
+	margin: 0;
+  font-family: tahoma, arial, 'Hiragino Sans GB', '\5b8b\4f53', sans-serif;
+  font-size: 14px;
+  line-height: 1.42857143;
+  color: #333;
+  background-color: #fff
+}
+a:link,a:visited,a:hover,a:active{
+	color:inherit;
+	text-decoration: none;
+}
+a:active,
+a:hover {
+  outline: 0;
+}
+ button,input,select{
+	margin: 0;
+	padding: 0;
+	border-width: 0;
+	-moz-box-sizing: border-box;
+	-webkit-box-sizing: border-box;
+	-o-box-sizing: border-box;
+	-ms-box-sizing: border-box;
+	box-sizing: border-box;
+	-webkit-appearance:none;
+	-moz-appearance:none;
+	appearance:none;
+}
+select::-ms-expand { display: none; }
+input::-ms-clear { display: none;}
+input::-ms-reveal { display: none;}
+button,select{
+	text-transform: none;
+}
+:focus {
+  /* border-width: 0; */
+  outline: none;
+}
+
+ol,
+ul {
+  list-style: none;
+}
+
+fieldset,
+img {
+  border: 0;
+}
+
+img{
+	vertical-align: top;
+}
+
+table {
+	table-layout:fixed;
+	border-collapse: collapse;
+	border-spacing: 0;
+}
+/* reset.css end */
+
+/* common style */
+h1,h2,h3,h4,h5,h6{
+	font-weight: 400;
+}
+
+.clearfix:before, 
+.clearfix:after { 
+  display: table; 
+  line-height: 0; 
+  content: ""; 
+} 
+.clearfix:after { 
+  clear: both; 
+}
+.ellipsis{
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.btn {
+	border: 1px solid #42b983;
+	border-radius: 2em;
+	display: inline-block;
+	color: #42b983;
+	font-size: 0.8em;
+	width: 125px;
+	padding: 4px 0;
+	text-align: center;
+	background-color: #fff;
+}
+/* common style */
+/* 教师大课表页tooltip样式 */
+#tooltip {
+	border-radius: 2px;
+	font-size: 12px;
+	font-family: monospace;
+}
+#tooltip .demo,.rightdemo {
+	background-color: rgb(255, 255, 255, .83);
+	/* height: 100px; */
+	position: relative;
+	width: 100px;
+	padding: 3px;
+}
+#tooltip .demo p {
+	text-align: justify;
+	text-justify: newspaper;
+	word-break: break-all;
+}
+#tooltip .demo:after {
+	content: '';
+	position: absolute;
+	border: 10px solid transparent;
+	border-top: 10px solid rgb(221, 221, 221);
+	top: 100%;
+	left: 10px;
+}
+#tooltip .rightdemo:after {
+	content: '';
+	position: absolute;
+	border: 10px solid transparent;
+	border-left: 10px solid rgb(221, 221, 221);
+  left: 100%;
+  top: 10px;
+}
+.my-dot-class{
+  position:absolute;
+  bottom:3px;
+}
