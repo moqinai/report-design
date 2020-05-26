@@ -27,8 +27,8 @@ const constantRoutes = [
       component: () => import('@/views/Home.vue'),
       meta: { title: '首页', icon: 'dashboard' }
     }]
-  },
-  {
+  }
+  /* {
     path: '/reportDesign',
     name: 'ReportDesign',
     component: Layout,
@@ -37,7 +37,7 @@ const constantRoutes = [
       meta: { title: '报表设计器' },
       component: () => import('@/views/reportDesign/index')
     }]
-  }
+  } */
 ]
 
 /* const router = new Router({

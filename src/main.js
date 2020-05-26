@@ -13,6 +13,9 @@ import store from './store'
 
 import * as filters from './filters' // global filters 全局过滤器
 
+import '@/icons' // icon
+import '@/permission' // permission control
+
 if (process.env.NODE_ENV === 'production') {
   const { mockXHR } = require('../mock')
   mockXHR()

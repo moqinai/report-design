@@ -50,6 +50,7 @@ export function mockXHR() {
 
 // for mock server
 const responseFake = (url, type, respond) => {
+  console.log(`${process.env.VUE_APP_BASE_API}${url}`)
   return {
     url: new RegExp(`${process.env.VUE_APP_BASE_API}${url}`),
     type: type || 'get',

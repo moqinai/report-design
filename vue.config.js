@@ -1,5 +1,6 @@
 'use strict'
 const path = require('path')
+const CompressionPlugin = require('compression-webpack-plugin')
 const defaultSettings = require('./src/settings.js')
 
 function resolve(dir) {
@@ -31,20 +32,59 @@ module.exports = {
   productionSourceMap: false,
   devServer: {
     port: port,
-    open: true,
+    open: false,
     overlay: {
       warnings: false,
       errors: true
     },
+    proxy: {
+      /* '/dev-api/report': {
+        target: 'http://test.report.pxjy.com/',
+        pathRewrite: { '^/dev-api/report': '/report' }
+      },
+      '/dev-api/admin': {
+        target: 'http://test.report.pxjy.com/',
+        changeOrigin: true,
+        pathRewrite: {
+          '^/dev-api/admin': '/admin'
+        }
+      }, */
+      [process.env.VUE_APP_BASE_API]: {
+        target: `http://127.0.0.1:${port}/mock`,
+        changeOrigin: true,
+        pathRewrite: {
+          ['^' + process.env.VUE_APP_BASE_API]: ''
+        }
+      }
+    },
     before: require('./mock/mock-server.js')
   },
-  configureWebpack: {
+  configureWebpack: config => {
     // provide the app's title in webpack's name field, so that
     // it can be accessed in index.html to inject the correct title.
-    name: name,
-    resolve: {
-      alias: {
-        '@': resolve('src')
+    if (process.env.NODE_ENV === 'production') {
+      return {
+        plugins: [
+          new CompressionPlugin({
+            test: /\.js$|\.html$|\.css/, // 匹配文件名
+            threshold: 10240, // 对超过10k的数据进行压缩
+            deleteOriginalAssets: false // 是否删除原文件
+          })
+        ],
+        name: name,
+        resolve: {
+          alias: {
+            '@': resolve('src')
+          }
+        }
+      }
+    }
+    return {
+      name: name,
+      resolve: {
+        alias: {
+          '@': resolve('src')
+        }
       }
     }
   },
