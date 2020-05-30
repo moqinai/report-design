@@ -31,7 +31,7 @@ export default {
       'sidebar'
     ]),
     routes() {
-      return this.$router.options.routes
+      return this.$router.options.routes // 全路由，如要修改成权限路由则改变
     },
     activeMenu() {
       const route = this.$route

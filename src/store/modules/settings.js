@@ -1,11 +1,13 @@
+// import variables from '@/styles/element-variables.scss'
 import defaultSettings from '@/settings'
 
-const { showSettings, fixedHeader, sidebarLogo } = defaultSettings
+const { showSettings, tagsView, fixedHeader, sidebarLogo } = defaultSettings
 
 const state = {
   showSettings: showSettings,
-  fixedHeader: fixedHeader,
-  sidebarLogo: sidebarLogo
+  tagsView: tagsView, // 标签导航
+  fixedHeader: fixedHeader, // 固定头部
+  sidebarLogo: sidebarLogo // 左侧菜单logo
 }
 
 const mutations = {

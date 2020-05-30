@@ -11,33 +11,94 @@ const constantRoutes = [
     component: () => import('@/views/login/index'),
     hidden: true
   },
-  {
-    path: '/404',
-    component: () => import('@/views/404'),
+  /* {
+    path: '/auth-redirect',
+    component: () => import('@/views/login/auth-redirect'),
     hidden: true
   },
   {
+    path: '/404',
+    component: () => import('@/views/error-page/404'),
+    hidden: true
+  }, */
+  /* {
+    path: '/401',
+    component: () => import('@/views/error-page/401'),
+    hidden: true
+  }, */
+  {
     path: '/',
-    name: 'home',
     component: Layout,
     redirect: '/home',
     children: [{
       path: 'home',
       name: 'Home',
       component: () => import('@/views/Home.vue'),
-      meta: { title: '首页', icon: 'dashboard' }
+      meta: { title: '首页', icon: 'dashboard', affix: true }
     }]
-  }
-  /* {
+  },
+  {
     path: '/reportDesign',
-    name: 'ReportDesign',
     component: Layout,
     children: [{
       path: 'index',
-      meta: { title: '报表设计器' },
+      name: 'ReportDesign',
+      meta: { title: '报表设计器', icon: 'example', noCache: false },
       component: () => import('@/views/reportDesign/index')
     }]
-  } */
+  },
+  {
+    path: '/report/ReportDetail',
+    component: Layout,
+    // hidden: true,
+    children: [
+      {
+        path: 'listReport/reportId/:reportId',
+        name: 'ListReport',
+        meta: { title: '设计器列表详情', noCache: false, icon: 'table' },
+        component: () => import('@/views/reportDesign/listReport.vue')
+      }
+    ]
+  },
+  {
+    path: '/report/ReportDesign',
+    component: Layout,
+    // hidden: true,
+    children: [
+      {
+        path: 'modelManagement',
+        name: 'ModelManagement',
+        component: () => import('@/views/reportDesign/modelManagement.vue'),
+        meta: { title: '模型管理', icon: 'chart', noCache: false }
+      }
+    ]
+  },
+  {
+    path: '/report/ReportDesign',
+    component: Layout,
+    // hidden: true,
+    children: [
+      {
+        path: 'fieldManagement',
+        name: 'FieldManagement',
+        component: () => import('@/views/reportDesign/fieldManagement.vue'),
+        meta: { title: '字段管理', icon: 'chart', noCache: false }
+      }
+    ]
+  },
+  {
+    path: '/report/ReportDesign',
+    component: Layout,
+    // hidden: true,
+    children: [
+      {
+        path: 'dataOriginManagement',
+        name: 'DataOriginManagement',
+        component: () => import('@/views/reportDesign/dataOriginManagement.vue'),
+        meta: { title: '数据源管理', icon: 'chart', noCache: false }
+      }
+    ]
+  }
 ]
 
 /* const router = new Router({

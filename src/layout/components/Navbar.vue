@@ -5,6 +5,13 @@
     <breadcrumb class="breadcrumb-container" />
 
     <div class="right-menu">
+
+      <template>
+        <el-tooltip v-if="false" effect="dark" placement="bottom">
+          <size-select id="size-select" class="right-menu-item hover-effect" />
+        </el-tooltip>
+      </template>
+
       <el-dropdown class="avatar-container" trigger="click">
         <div class="avatar-wrapper">
           <img :src="avatar+'?imageView2/1/w/80/h/80'" class="user-avatar">
@@ -13,7 +20,7 @@
         <el-dropdown-menu slot="dropdown" class="user-dropdown">
           <router-link to="/">
             <el-dropdown-item>
-              Home
+              首页
             </el-dropdown-item>
           </router-link>
           <a target="_blank" href="https://github.com/PanJiaChen/vue-admin-template/">
@@ -35,10 +42,12 @@
 import { mapGetters } from 'vuex'
 import Breadcrumb from '@/components/Breadcrumb'
 import Hamburger from '@/components/Hamburger'
+import SizeSelect from '@/components/SizeSelect'
 
 export default {
   components: {
     Breadcrumb,
+    SizeSelect,
     Hamburger
   },
   computed: {
