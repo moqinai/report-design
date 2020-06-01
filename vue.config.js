@@ -38,17 +38,6 @@ module.exports = {
       errors: true
     },
     proxy: {
-    /* '/dev-api/report': {
-        target: 'http://test.report.pxjy.com/',
-        pathRewrite: { '^/dev-api/report': '/report' }
-      },
-      '/dev-api/admin': {
-        target: 'http://test.report.pxjy.com/',
-        changeOrigin: true,
-        pathRewrite: {
-          '^/dev-api/admin': '/admin'
-        }
-      }, */
       [process.env.VUE_APP_BASE_API]: {
         target: `http://localhost:${port}/mock`,
         changeOrigin: true,

@@ -2,7 +2,7 @@
   <div class="report-config">
     <el-tabs v-model="activeName" @tab-click="handleClick">
       <el-tab-pane label="字段属性" name="field">
-        <div v-if="JSON.stringify(formConfig) === '{}'" class="text-content">
+        <div v-if="JSON.stringify(formConfig) === '{}' || deleteFlag" class="text-content">
           请添加/选择字段
         </div>
         <div v-else>
@@ -234,6 +234,15 @@
                   </el-select>
                 </el-form-item>
                 <hr>
+                <template v-if="is_timestamp">
+                  <el-form-item label="是否时间戳">
+                    <el-select v-model="formConfig.is_timestamp" placeholder="请选择">
+                      <el-option label="否" :value="0" />
+                      <el-option label="是" :value="1" />
+                    </el-select>
+                  </el-form-item>
+                  <hr>
+                </template>
                 <!-- 根据字段类型来判断是否显示 start -->
                 <div v-if="need_extra === 1">
                   <template v-if="formConfig.col_type !== 'radio' && formConfig.col_type !== 'checkbox'">
@@ -311,7 +320,6 @@
               <template v-if="layoutType === 'check'">
                 <h3>按钮</h3>
                 <hr>
-                {{ formConfig }}
                 <template v-if="formConfig.label === 'add' || formConfig.label === 'edit'">
                   <el-form-item label="地址">
                     <el-input v-model="formConfig.address" />
@@ -379,6 +387,19 @@
                 <el-checkbox v-model="requeryView">全屏</el-checkbox>
               </el-form-item>
               <hr>
+              <template v-if="formConfig.label === 'delete' || formConfig.label === 'edit'">
+                <el-form-item label="主键">
+                  <el-select v-model="pk" placeholder="请选择取值类型">
+                    <el-option
+                      v-for="item in primaryKey"
+                      :key="item.data_col_id"
+                      :label="item.col_name"
+                      :value="item.data_col_id"
+                    />
+                  </el-select>
+                </el-form-item>
+                <hr>
+              </template>
             </el-form>
           </div>
         </div>
@@ -397,6 +418,10 @@ export default {
     reportType: {
       default: () => '',
       type: String
+    },
+    primaryKey: {
+      default: () => [],
+      type: Array
     }
   },
   data() {
@@ -454,6 +479,7 @@ export default {
         } */
       ],
       need_extra: 0, // 标准控件是否显示
+      is_timestamp: 0, // 是否时间戳是否显示
       controls: '', // 标准控件选中
       controlsOptions: [], // 标准控件选项
       // textareaOptions: '', // 下拉选项textarea框
@@ -505,6 +531,7 @@ export default {
       numberValue: 0,
       allTiltWidth: 100, // 全局标签宽度
       requeryView: false, // 别表型 全局 是否全屏
+      pk: '', // 主键
       radioView: ''
       /* formConfig: {
         code: '',
@@ -516,31 +543,19 @@ export default {
   },
   computed: {
     ...mapState({
+      deleteFlag: state => state.reportDesign.deleteFlag, // 删除标识
       layoutdata: state => state.reportDesign.layoutdata, // 整体所有数据
       formConfig: state => state.reportDesign.reportItem, // 单个选中数据
       layoutType: state => state.reportDesign.layoutType, // 用来区分是form、 tableFilter、table
-      itemIndex: state => state.reportDesign.itemIndex // 选中项标识
+      itemIndex: state => state.reportDesign.itemIndex, // 选中项标识
+      dataId: state => state.reportDesign.dataId, // 数据集id
+      dataList: state => state.reportDesign.dataList // 数据集
     }),
     filterFieldTypeOptions: function() { // 列表型 配置 字段类型 字段筛选
       return this.fieldTypeOptions.filter((ele, index, arr) => ele.use_search) // 过滤出为0的数据留下为1的
     }
   },
   watch: {
-    /* labelWidth: { // 监听表单型 单个标签宽度
-      handler(n, old) {
-        this.updateConfig(n, 'labelWidth') // 变更labelwidth
-      }
-    }, */
-    /* reportType: {
-      handler(n, o) {
-        if (n === 'form') {
-          this.getColType()
-        } else {
-          this.getColType()
-          this.getStatisticsFunc()
-        }
-      }
-    }, */
     allTiltWidth: {
       handler(n, o) {
         const data = JSON.parse(JSON.stringify(this.layoutdata))
@@ -569,6 +584,8 @@ export default {
     formConfig: {
       handler(newData, oldData) {
         console.log('1233333333')
+        console.log(oldData)
+        console.log(newData)
         if (JSON.stringify(newData) !== JSON.stringify(oldData)) {
           if (this.layoutType === 'form') {
             if (newData.col_type === 'select' || newData.col_type === 'multiple' || newData.col_type === 'filterable' || newData.col_type === 'filterables' || newData.col_type === 'radio' || newData.col_type === 'checkbox') {
@@ -581,13 +598,17 @@ export default {
             this.layoutdata.layoutForm.splice(this.itemIndex, 1, this.formConfig)
             // this.$store.commit('reportDesign/LAYOUT_DATA', this.layout) // 在改变配置属性之后将其存入store
           } else if (this.layoutType === 'tableFilter') {
-            if (newData.col_type === 'select' || newData.col_type === 'multiple' || newData.col_type === 'filterable' || newData.col_type === 'filterables' || newData.col_type === 'radio' || newData.col_type === 'checkbox') {
+            console.log(newData)
+            if (newData.col_type !== oldData.col_type) { // 有变化则处理need_extra显示
+              this.fieldTypeChange(this.formConfig.col_type) // 每次选中的模块变化时，都更新标准控件的显示标示
+            }
+            /* if (newData.col_type === 'select' || newData.col_type === 'multiple' || newData.col_type === 'filterable' || newData.col_type === 'filterables' || newData.col_type === 'radio' || newData.col_type === 'checkbox') {
               if (newData.col_type !== oldData.col_type) { // 有变化则处理need_extra显示
                 this.fieldTypeChange(this.formConfig.col_type) // 每次选中的模块变化时，都更新标准控件的显示标示
               }
             } else {
               this.need_extra = 0 // need_extra就是不显示的意思
-            }
+            } */
             this.layoutdata.layoutFilter.splice(this.itemIndex, 1, this.formConfig)
           } else if (this.layoutType === 'table') {
             this.layoutdata.layoutTable.splice(this.itemIndex, 1, this.formConfig)
@@ -601,23 +622,29 @@ export default {
       },
       immediate: true,
       deep: true
+    },
+    pk: { // 监控全局主键是否变化，
+      handler(n, o) {
+        if (n !== o) {
+          const data = JSON.parse(JSON.stringify(this.layoutdata))
+          data.pk = this.pk
+          this.$store.commit('reportDesign/LAYOUT_DATA', data) // 在改变配置属性之后将其存入store
+        }
+      }
     }
   },
   created() {
     this.requeryView = this.layoutdata.requeryView
+    this.pk = this.layoutdata.pk
     this.getColType()
     this.getStatisticsFunc()
   },
-  mounted() {
-    console.log(this.formConfig.type)
-  },
+  mounted() {},
   methods: {
     handleClick(tab, event) {
       console.log(tab, event)
     },
     updateConfig(e, type) { // 修改code；  e值，type类型
-      console.log(e)
-      console.log(type)
       const item = JSON.parse(JSON.stringify(this.formConfig)) // Object.assign({}, this.formConfig)
       /* if (type === 'dataColFieldId') { // 标识
         item.dataColFieldId = e
@@ -664,6 +691,7 @@ export default {
       this.fieldType = event // 赋值字段类型，
       this.fieldTypeOptions.map((e, i) => {
         if (event === e.id) {
+          this.is_timestamp = e.is_time // 判断控制显示 是否时间戳
           this.need_extra = e.need_extra // 由该字段控制判断 标准控件模块是否显示
         }
       })

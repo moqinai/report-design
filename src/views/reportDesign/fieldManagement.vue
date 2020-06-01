@@ -118,7 +118,7 @@ import pagination from '@/components/Pagination'
 import { getFiledsList, addOrEditField, getFieldType, delField } from '@/api/api'
 
 export default {
-  name: 'DataOriginManagement',
+  name: 'FieldManagement',
   components: { pagination },
   props: {},
   data() {
@@ -169,7 +169,7 @@ export default {
   created() {
     this.model_id = this.$route.query.modelId
     this.ruleForm.model_id = this.model_id
-    this.createdViewFun()
+    // this.createdViewFun()
     this.getReportData()
     this.getFieldType()
   },

@@ -1,26 +1,4 @@
 <template>
-  <!--
-  <div class="design">
-    <header class="design-header">
-      报表设计器
-    </header>
-    <div class="design-container">
-      <div class="container-left">
-        <div class="left-top">
-          左上
-        </div>
-        <div class="left-bottom">
-          左下
-        </div>
-      </div>
-      <section class="container-content">
-        中间
-      </section>
-      <div class="container-right">
-        右侧
-      </div>
-    </div>
-    -->
   <div class="app-container">
     <el-container>
       <el-header class="container-header">
@@ -58,7 +36,7 @@
           />
         </el-main>
         <el-aside class="right-el-aside">
-          <reportAttrConfig :report-type="reportType" />
+          <reportAttrConfig :report-type="reportType" :primary-key="primaryKey" />
         </el-aside>
       </el-container>
 
@@ -95,7 +73,7 @@
 
 <script type='text/ecmascript-6'>
 // import { getReportListNew, getDataListByReportId, getDataSourceList, delDataSet } from '@/api/customreport.js' // getDataListByReportId
-import { saveReportCols, saveReport, getReportDetailInfoNew, getReportListNew, getDataListByReportId, getDataSourceList, delDataSet } from '@/api/api'
+import { getReportListNew, getDataListByReportId, getDataSourceList, delDataSet, saveReportCols, saveReport, getReportDetailInfoNew } from '@/api/api'
 import mineReport from './components/mineReport'
 import contentReport from './components/contentReport'
 import reportDataSet from './components/reportDataSet'
@@ -129,7 +107,8 @@ export default {
       datasetInfo: {},
       activeDataReport: {},
       fullscreenLoading: false, // 保存加载动画
-      tableCols: [] // 表头数据
+      tableCols: [], // 表头数据
+      primaryKey: [] // 主键数据
     }
   },
   computed: {
@@ -137,9 +116,28 @@ export default {
       layoutdata: state => state.reportDesign.layoutdata,
       reportType: state => state.reportDesign.reportType, // 默认form // 预览及设计区域报表类型（目前分表单型form、填报型excel） // 在选中左侧报表时 或者 添加时改变其值
       reportId: state => state.reportDesign.reportId, // 报表id
-      dataId: state => state.reportDesign.dataId // 数据集id
+      dataId: state => state.reportDesign.dataId, // 数据集id
+      reportDataList: state => state.reportDesign.dataList // 数据集
       // tableCols: state => state.reportDesign.tableCols
     })
+  },
+  watch: {
+    reportDataList: {
+      handler(n, o) {
+        console.log('进dataList监控' + this.dataId)
+        // if (this.dataId) { // 前提是dataId存在的情况下
+        if (JSON.stringify(n) !== JSON.stringify(o)) {
+          n.map((list, index) => {
+            if (list.data_info.data_id === this.dataId) {
+              this.primaryKey = list.child // 当前主键
+            }
+          })
+        }
+        // }
+      },
+      deep: true,
+      immediate: true
+    }
   },
   created() {
     this.getReportListNew()
@@ -152,7 +150,7 @@ export default {
   methods: {
     closeDataSetDialog() {
       this.dataSetDialogShow = false
-      this.getDataListByReportId()
+      this.getDataListByReportId(this.activeDataReport)
     },
     getReportListNew() {
       getReportListNew(
@@ -164,11 +162,8 @@ export default {
       })
     },
     getDataListByReportId(data) { // 接收点击 我的报表 传递过来参数
-      console.log(data)
       this.activeDataReport = data
-      console.log(this.$store.state.reportDesign.reportId)
       const reportId = this.$store.state.reportDesign.reportId
-      // 此处157 暂时写死
       getDataListByReportId({ reportId: reportId }).then(res => { // 获取数据集接口
         if (res.state === 2000) {
           this.dataList = res.data
@@ -176,6 +171,7 @@ export default {
           this.dataList = []
           this.$message.error('数据集获取失败')
         }
+        this.$store.commit('reportDesign/DATALIST', this.dataList) // 存储数据集
       })
     },
     dragDropResponse() {
@@ -287,17 +283,45 @@ export default {
             // list.options.unshift({ id: '', name: '请选择' + list.placeholder })
           }
         })
-        /* data1.layoutTable.map((list, ind) => { // 选中状态置为false
-          list.addClass = false
-          // 根据不同的表单类型 赋值不同的model数据类型 以dataColFieldId作为表单标识，因为不同
-          if (list.col_type === 'select' || list.col_type === 'multiple' || list.col_type === 'filterable' || list.col_type === 'filterables') {
-            if (list.extra.length) { // 如果有下拉选项值，则用下拉选项值替换options
-              list.options = list.extra // 赋给options
-              // list.extra = [] // 将extra置空
-            }
-          }
-        }) */
         console.log(data1)
+        let isResetPk = 0
+        this.layoutdata.checkList.map((item, index) => {
+          if (item.label === 'edit' || item.label === 'delete') {
+            if (!item.checked) {
+              isResetPk++
+            }
+            /* if (item.checked) {
+              if (!this.layoutdata.pk) {
+                this.$notify.error({
+                  title: '失败',
+                  message: '请选择全局属性填写主键选项',
+                  duration: 3000
+                })
+                validFlag = true
+                return false
+              }
+            } else {
+              console.log(1)
+              isResetPk++
+            } */
+          }
+        })
+        console.log(isResetPk)
+        if (isResetPk === 2) { // 当它为2时表示删除和编辑都没勾选
+          data1.pk = '' // 则清空
+        } else { // 否则表示选了
+          if (!this.layoutdata.pk) { // 则判断是否填了全局主键
+            this.fullscreenLoading = false // 同时将请求动画关闭
+            this.$notify.error({ // 没填警告
+              title: '失败',
+              message: '请选择全局属性填写主键选项',
+              duration: 3000
+            })
+            return false
+          } else { // 填了赋值
+            data1.pk = this.layoutdata.pk
+          }
+        }
         this.saveReportFun(data1, viewFlag)
       }
     },
@@ -370,7 +394,6 @@ export default {
       })
     },
     addDataSet(obj) {
-      console.log(obj)
       if (this.activeDataReport && this.activeDataReport.type !== 1) {
         this.dataSetType = 'add'
         this.datasetInfo = obj instanceof Object ? obj : {}

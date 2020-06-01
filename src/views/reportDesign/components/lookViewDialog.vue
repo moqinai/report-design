@@ -222,7 +222,7 @@
                 </template>
               </el-form-item>
             </el-col>
-            <el-col :sm="2" :md="2" :lg="2" :xl="2">
+            <el-col v-if="layoutdata.layoutFilter.length" :sm="2" :md="2" :lg="2" :xl="2">
               <el-form-item>
                 <el-button type="primary" @click="handleFilter">
                   搜索
@@ -234,13 +234,18 @@
       </div>
       <div class="operation-wrap">
         <el-row>
-          <el-button v-for="(item, index) in layoutdata.checkList" v-show="item.checked" :key="index" plain :type="item.label === 'add' ? 'primary' : item.label === 'edit' ? 'success' : 'primary'">
+          <!-- <el-button v-for="(item, index) in layoutdata.checkList" v-show="item.checked" :key="index" plain :type="item.label === 'add' ? 'primary' : item.label === 'edit' ? 'success' : 'primary'">
             {{ item.name }}
-          </el-button>
+          </el-button> -->
+          <template v-for="(item, index) in checkListBtn">
+            <el-button :key="index" plain :type="item.label === 'add' ? 'primary' : item.label === 'edit' ? 'success' : 'primary'">
+              {{ item.name }}
+            </el-button>
+          </template>
         </el-row>
       </div>
       <div class="table-container">
-        <template>
+        <template v-if="updateTable">
           <el-table
             ref="filterTable"
             v-loading="listLoading"
@@ -253,6 +258,12 @@
             :data="listdata"
             style="width: 100%;"
           ><!-- :height="tableHeight" -->
+            <el-table-column
+              v-if="editOrDelBtnFlag.length"
+              type="selection"
+              width="55"
+              align="center"
+            />
             <template v-for="(item, index) in tablecols">
               <listTable v-if="item.child && item.child.length" :key="index" :coloumn-header="item" />
               <el-table-column v-else :key="index" :label="item.title" :prop="item.dataColFieldId" align="center" />
@@ -278,6 +289,8 @@
           :total="total"
           :page.sync="listQuery.page"
           :limit.sync="listQuery.pageSize"
+          :not-page="notPage"
+          :page-count="pageCount"
           @pagination="getLookViewTableData"
         />
       </div>
@@ -321,19 +334,30 @@ export default {
         pageSize: 10
       },
       listdata: [],
-      total: 0
+      total: 0,
+      notPage: false,
+      pageCount: 1,
+      updateTable: true
     }
   },
   computed: {
     ...mapState({ // 获取layout数据
       reportId: state => state.reportDesign.reportId // 报表id
-    })
+    }),
+    checkListBtn: function() { // 渲染按钮
+      return this.layoutdata.checkList.filter(item => item.checked)
+    },
+    editOrDelBtnFlag: function() { // 筛选出是否有编辑和删除按钮， 用来控制显示表格复选框列
+      return this.checkListBtn.filter(item => item.label === 'edit' || item.label === 'delete')
+    }
   },
   watch: {
     tablecols: {
       handler(n, o) {
         console.log('123')
+        console.log(n)
         if (this.reportType === 'excel' && JSON.stringify(n) !== JSON.stringify(o)) { // 如果是列表型
+          console.log('进请求')
           this.getLookViewTableData() // 列表型 请求表格数据
         }
       },
@@ -343,7 +367,7 @@ export default {
   },
   created() {
     console.log('Lookviewdialog')
-    console.log(this.form)
+    console.log(this.tablecols)
     this.lookForm = JSON.parse(JSON.stringify(this.form)) // 简易深拷贝
   },
   mounted() {
@@ -367,13 +391,15 @@ export default {
     },
     getLookViewTableData() { // 请求预览table表格数据
       this.listLoading = true
-      this.listQuery.reportId = this.reportId
+      this.listQuery.reportId = +this.reportId
       this.listQuery.searchParam = this.lookForm // 搜索条件
 
       getListReportData(this.listQuery).then(res => {
         if (res.state === 2000) {
           this.listdata = res.data.data
-          this.total = res.data.count // 总页数
+          this.total = res.data.count // 总数量
+          this.pageCount = res.data.totalPage // 总页数
+          this.notPage = res.data.notPage // 是否是单页表格数据
         } else {
           this.$message.error(res.message)
         }

@@ -27,6 +27,7 @@
             get-checked-nodes="getCh"
             style="width: 100%"
             accordion
+            :highlight-current="true"
             @node-expand="handleNodeClick"
             @node-click="handleNodeClick"
           >
@@ -64,36 +65,7 @@ export default {
     return {
       activeNodeParent: '',
       activeNodeChild: '',
-      data: [
-        {
-          label: '一级 1',
-          type: 'folder',
-          children: [{
-            type: 'report',
-            label: '二级 1-1'
-          }]
-        },
-        {
-          label: '一级 2',
-          children: [{
-            label: '二级 2-1',
-            type: 'report'
-          }, {
-            label: '二级 2-2',
-            type: 'report'
-          }]
-        }, {
-          label: '一级 3',
-          type: 'folder',
-          children: [{
-            label: '二级 3-1',
-            type: 'report'
 
-          }, {
-            label: '二级 3-2',
-            type: 'report'
-          }]
-        }],
       defaultProps: {
         children: 'child'
         // label: (data, node) => {
@@ -175,6 +147,8 @@ export default {
       img{
         margin:0px 5px;
         cursor:pointer;
+        width:16px;
+        height:16px;
         &:last-child{
           margin-right:0px;
         }

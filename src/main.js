@@ -18,7 +18,6 @@ import '@/permission' // permission control
 
 console.log(process.env.NODE_ENV)
 if (process.env.NODE_ENV === 'development') {
-  console.log('debugger')
   const { mockXHR } = require('../mock')
   mockXHR()
 }

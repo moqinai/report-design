@@ -150,7 +150,7 @@
                 :min-w="2"
                 class="grid-item"
               >
-                <div class="item-content" :class="item.addClass ? 'item-addClass' : ''" @click="onclickGridItem($event, index, 'tableFilter')">
+                <div class="item-content" :class="item.addClass ? 'item-addClass' : ''" @click.stop="onclickGridItem($event, index, 'tableFilter')">
                   <span class="delectIcon" @click.stop="onclickDelete($event, index, 'tableFilter')"><i class="el-icon-close" /></span>
                   <div class="item-form">
                     <el-form-item>
@@ -215,7 +215,7 @@
       <!-- 中间操作按钮模块 -->
       <div class="footer-button-container">
         <template>
-          <el-checkbox v-for="(item, ind) in layoutdata.checkList" :key="ind" v-model="item.checked" :label="item.label" @change="checkListChange($event, ind)">{{ item.name }}</el-checkbox>
+          <el-checkbox v-for="(item, ind) in layoutdata.checkList" :key="ind" v-model="item.checked" :disabled="item.disabled" :label="item.label" @change="checkListChange($event, ind)">{{ item.name }}</el-checkbox>
         </template>
       </div>
       <!-- 列表型 列表表格start -->
@@ -253,7 +253,7 @@
               :min-w="2"
               class="grid-item"
             >
-              <div class="item-content" :class="item.addClass ? 'item-addClass' : ''" @click="onclickGridItem($event, index, 'table')">
+              <div class="item-content" :class="item.addClass ? 'item-addClass' : ''" @click.stop="onclickGridItem($event, index, 'table')">
                 <span class="delectIcon" @click.stop="onclickDelete($event, index, 'table')"><i class="el-icon-close" /></span>
                 <div class="item-form">
                   <div>{{ item.title }}</div>
@@ -294,6 +294,7 @@ export default {
   },
   data() {
     return {
+      dropDataListFlag: true, // 是否更新过dataList标识
       formTitle: '', // 标题
       titlePlaceholder: '请填写表单标题', // 标题框placeholder,根据填报型，列表型切换
       row: 0, // 多少行
@@ -309,10 +310,10 @@ export default {
         layoutFilter: [],
         layoutTable: [],
         checkList: [
-          { name: '新增', label: 'add', checked: false, permissions: false, address: '' },
-          { name: '编辑', label: 'edit', checked: false, permissions: false, address: '' },
-          { name: '删除', label: 'delete', checked: false, permissions: false, address: '' },
-          { name: '导出', label: 'export', checked: false, permissions: false, address: '' }
+          { name: '新增', label: 'add', checked: false, permissions: false, address: '', disabled: false },
+          { name: '编辑', label: 'edit', checked: false, permissions: false, address: '', disabled: false },
+          { name: '删除', label: 'delete', checked: false, permissions: false, address: '', disabled: false },
+          { name: '导出', label: 'export', checked: false, permissions: false, address: '', disabled: false }
         ]
       },
       layoutMap: [], // 布局二维数组地图
@@ -398,6 +399,7 @@ export default {
       const dataSetInfo = JSON.parse(e.dataTransfer.getData('data-set-info'))
       const nodeInfo = JSON.parse(e.dataTransfer.getData('node-info'))
       console.log(dataSetInfo)
+      // dataSetInfo.data_info.type = 2
       let layoutLength = []
       console.log(this.dataId + 'mmmmmm' + dataSetInfo.data_info.data_id)
       console.log(this.tableId + 'kkkkkk' + nodeInfo.table_id)
@@ -420,6 +422,22 @@ export default {
           this.$message.error('同一个数据表不能拖拽两次')
           return false
         }
+        if (type !== 'form' && this.dropDataListFlag) {
+          const dataInfo = []
+          console.log(dataInfo)
+          if (dataSetInfo.data_info.type === 2) { // 当此type为2时，删除按钮不可选
+            this.layoutdata.checkList.map((item) => {
+              if (item.label === 'delete') {
+                item.checked = false
+                item.disabled = true
+              }
+            })
+          }
+          dataInfo.push(dataSetInfo)
+          this.$store.commit('reportDesign/DATALIST', dataInfo) // 存储数据集
+          this.dropDataListFlag = false
+        }
+
         this.$store.commit('reportDesign/DATAID', dataSetInfo.data_info.data_id) // 存储最新当前的数据集id
         this.$store.commit('reportDesign/TABLEID', nodeInfo.table_id) // 存储最新table_id
         this.calculateData(nodeInfo, type)
@@ -564,7 +582,7 @@ export default {
       if (type === 'form') {
         addItem = Object.assign(addItem, { default_value: '', regular_expression: '', error_prompt: '', max_len: '', min_len: '', numberMin: 0, numberMax: 1, numberStep: 1, numberValue: 0, extra: [], checkboxExtraValue: [], extraValue: '', radioOrcheckboxView: 'inlineBlock', fill_rule: '', is_show: true, is_only: false, is_empty: false, 'col_type': 'input', 'placeholder': data.col_name, 'title': data.col_name, 'dataColFieldId': data.data_col_id, 'labelWidth': 100, 'width': '100%' })
       } else if (type === 'filter') {
-        addItem = Object.assign(addItem, { is_show: true, 'col_type': 'input', 'placeholder': data.col_name, 'dataColFieldId': data.data_col_id, default_value: '', 'width': '100%', regular_expression: '', error_prompt: '', max_len: '', min_len: '', numberMin: 0, numberMax: 1, numberStep: 1, numberValue: 0, extra: [], checkboxExtraValue: [], extraValue: '', radioOrcheckboxView: 'inlineBlock', is_empty: false })
+        addItem = Object.assign(addItem, { is_show: true, 'col_type': 'input', 'placeholder': data.col_name, 'dataColFieldId': data.data_col_id, default_value: '', 'width': '100%', regular_expression: '', error_prompt: '', max_len: '', min_len: '', numberMin: 0, numberMax: 1, numberStep: 1, numberValue: 0, extra: [], checkboxExtraValue: [], extraValue: '', radioOrcheckboxView: 'inlineBlock', is_timestamp: 0, is_empty: false })
       } else if (type === 'table') {
         addItem = Object.assign(addItem, { total_way: '', value_type: '', formula: '', 'title': data.col_name, 'width': '100%', 'dataColFieldId': data.data_col_id })
       }
@@ -629,17 +647,14 @@ export default {
       if (type === 'form') { // 根据传入的不同类型，赋值不同数据，及不同模块大小
         this.layout.layoutForm.push(addItem)
         this.$store.commit('reportDesign/LAYOUT_DATA', this.layout) // 在改变配置属性之后将其存入store
-        console.log(this.layout) // 计算后的布局
         this.howMany(this.layout) // 新增后重新计算高度
       } else if (type === 'filter') {
         this.layoutdata.layoutFilter.push(addItem)
         this.$store.commit('reportDesign/LAYOUT_DATA', this.layoutdata) // 在改变配置属性之后将其存入store
-        console.log(this.layoutdata) // 计算后的布局
         this.howMany(this.layoutdata) // 新增后重新计算高度
       } else if (type === 'table') {
         this.layoutdata.layoutTable.push(addItem)
         this.$store.commit('reportDesign/LAYOUT_DATA', this.layoutdata) // 在改变配置属性之后将其存入store
-        console.log(this.layoutdata) // 计算后的布局
         this.howMany(this.layoutdata) // 新增后重新计算高度
       }
     },
@@ -711,6 +726,8 @@ export default {
       return (Math.random() * (m - n + 1) + n) | 0
     },*/
     onclickGridItem(e, i, type) { // 选中设计区域某个模块方法
+      console.log('选中选中')
+      this.$store.commit('reportDesign/DELETEFLAG', false) // 删除操作
       if (type === 'form') {
         this.layout.layoutForm.map((list, index) => { // 先将其它选项清空
           list.addClass = false
@@ -747,26 +764,35 @@ export default {
       // this.addClass(e.target, 'item-addClass')
     },
     onclickDelete(e, i, type) { // 点击选中模块右上角删除事件
+      this.$store.commit('reportDesign/DELETEFLAG', true) // 删除操作
+      // this.$store.commit('reportDesign/EDIT_REPORT_ITEM', {}) // 置空当前选中
+      // this.$store.commit('reportDesign/EDIT_ITEM_INDEX', 0) // 重置选中标识
       if (type === 'form') {
         this.layout.layoutForm.splice(i, 1)
         console.log(this.layout)
         if (!this.layout.layoutForm.length) {
           this.$store.commit('reportDesign/DATAID', '') // 重置数据集id
         }
-        // this.$store.commit('reportDesign/LAYOUT_DATA', this.layout) // 在删除之后将其存入store
+        this.$store.commit('reportDesign/LAYOUT_DATA', this.layout) // 在删除之后将其存入store
       } else if (type === 'tableFilter') {
         this.layoutdata.layoutFilter.splice(i, 1)
-        console.log(this.layoutdata)
+        console.log(this.layoutdata.layoutFilter)
       } else if (type === 'table') {
         this.layoutdata.layoutTable.splice(i, 1)
       }
       if (type === 'tableFilter' || type === 'table') {
+        this.$store.commit('reportDesign/LAYOUT_DATA', this.layoutdata) // 因为此处splice删除数据嵌套，不能触发layoutdata数据更新，所以此处手动更新
         if (!this.layoutdata.layoutFilter.length && !this.layoutdata.layoutTable.length) {
           this.$store.commit('reportDesign/DATAID', '') // 重置数据集id
+          console.log('重置id' + this.dataId)
+          this.layoutdata.checkList.map((item) => { // 重置
+            if (item.label === 'delete') {
+              item.disabled = true
+            }
+          })
+          this.dropDataListFlag = true // 重置后又可以重新赋值
         }
       }
-      this.$store.commit('reportDesign/EDIT_REPORT_ITEM', {}) // 置空当前选中
-      this.$store.commit('reportDesign/EDIT_ITEM_INDEX', 0) // 重置选中标识
     },
     checkListChange(e, i) { // 报表型 操作按钮 改变方法
       this.layoutdata.layoutFilter.map((list, index) => { // 先将列表型Filter其它选项清空
@@ -775,22 +801,25 @@ export default {
       this.layoutdata.layoutTable.map((list, index) => { // 先将列表型table其它选项清空
         list.addClass = false
       })
+      this.$store.commit('reportDesign/EDIT_ITEM_INDEX', i)
+      this.$store.commit('reportDesign/EDIT_ITEM_LAYOUTTYPE', 'check')
+      this.$store.commit('reportDesign/EDIT_REPORT_ITEM', this.layoutdata.checkList[i])
       if (e) { // 当为选中时传递选中信息
-        this.$store.commit('reportDesign/EDIT_ITEM_INDEX', i)
+        /* this.$store.commit('reportDesign/EDIT_ITEM_INDEX', i)
         this.$store.commit('reportDesign/EDIT_ITEM_LAYOUTTYPE', 'check')
-        this.$store.commit('reportDesign/EDIT_REPORT_ITEM', this.layoutdata.checkList[i])
+        this.$store.commit('reportDesign/EDIT_REPORT_ITEM', this.layoutdata.checkList[i]) */
       } else { // 当取消选择时，置空他的地址，取消是否控制权限标识
-        // this.layoutdata.checkList[i].address = ''
-        // this.layoutdata.checkList[i].permissions = false
-        this.$store.commit('reportDesign/EDIT_REPORT_ITEM', {})
-        this.$store.commit('reportDesign/EDIT_ITEM_LAYOUTTYPE', 'check')
-        this.$store.commit('reportDesign/EDIT_ITEM_INDEX', i)
+        // this.$store.commit('reportDesign/EDIT_REPORT_ITEM', {})
+        // this.$store.commit('reportDesign/EDIT_ITEM_LAYOUTTYPE', 'check')
+        // this.$store.commit('reportDesign/EDIT_ITEM_INDEX', i)
       }
     },
-    getReportData(id) { // 通过id获取填报型数据
+    getReportData(id) { // 通过id获数据
       getReportDetailInfoNew({ reportId: id }).then(res => {
         if (res.state === 2000) {
           if (this.reportType === 'form') { // 填报型
+            this.$store.commit('reportDesign/SETREPORTCATEGORY', res.data.reportInfo.report_category)
+
             this.formTitle = res.data.reportInfo.report_nickname || '' // 获取设置报表名称
             this.layout.layoutForm = res.data.reportCols || []
             if (res.data.reportCols.length) {
@@ -803,10 +832,13 @@ export default {
             // this.layoutMap = this.genereatePlaneArr(this.layout.layoutForm)
             console.log(this.layoutMap)
           } else if (this.reportType === 'excel') { // 列表型
-            this.formTitle = res.data.formTitle || ''
-            this.layoutdata.requeryView = res.data.requeryView || false
+            this.$store.commit('reportDesign/SETREPORTCATEGORY', '')
+            this.formTitle = res.data.formTitle || '' // 全局属性
+            this.layoutdata.requeryView = res.data.requeryView || false // 全局属性
+            this.layoutdata.pk = res.data.pk || '' // 全局属性
             this.layoutdata.layoutTable = res.data.layoutTable || []
             this.layoutdata.layoutFilter = res.data.layoutFilter || []
+
             if (!res.data.checkList.length) { // 为空时赋值默认
               this.layoutdata.checkList = [
                 { name: '新增', label: 'add', checked: false, permissions: false, address: '' },
@@ -817,6 +849,9 @@ export default {
             } else {
               this.layoutdata.checkList = res.data.checkList
             }
+            /* if (res.data.type === 2) {
+              this.layoutdata.checkList
+            } */
             const dataId = res.data.dataId || '' // 当返回为0时置为空
             // const tablecols = res.data.tablecols || []
             this.$store.commit('reportDesign/DATAID', dataId) // 存储当前的数据集id
@@ -825,6 +860,7 @@ export default {
             // this.$store.commit('reportDesign/TABLEID', res.data.reportId) // 报表id
           }
         } else {
+          this.$store.commit('reportDesign/SETREPORTCATEGORY', '')
           this.$store.commit('reportDesign/DATAID', '') // 存储当前的数据集id
           // this.$store.commit('reportDesign/TABLEID', '') // 存储table_id
           this.layout.layoutForm = []

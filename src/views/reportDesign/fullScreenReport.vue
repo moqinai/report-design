@@ -196,7 +196,7 @@ import { getReportDetailInfoNew, getListReportData } from '@/api/api'
 import { reportDesignExportTable } from '@/utils/export-file.js'
 import listTable from './components/listTable.vue'
 export default {
-  name: 'ListReport',
+  name: 'FullScreenReport',
   components: { pagination, listTable },
   props: {},
   data() {
@@ -229,7 +229,7 @@ export default {
   },
   watch: {},
   created() {
-    this.reportId = this.$route.query.reportId // 获取路径中的参数
+    this.reportId = this.$route.params.reportId // 获取路径中的参数
     this.initData()
   },
   mounted() {},

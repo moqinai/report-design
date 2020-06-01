@@ -13,7 +13,7 @@
                 :key="index"
                 :xs="8"
                 :sm="6"
-                :md="4"
+                :md="6"
                 :lg="3"
                 :xl="3"
               >
@@ -89,9 +89,9 @@
                     <el-date-picker
                       v-model="lookForm[item.report_sf_id]"
                       type="date"
-                      value-format="yyyy-MM-dd"
                       :placeholder="item.placeholder"
                       style="width:100%"
+                      value-format="yyyy-MM-dd"
                     />
                   </el-form-item>
                 </template>
@@ -100,11 +100,11 @@
                     <el-date-picker
                       v-model="lookForm[item.report_sf_id]"
                       type="daterange"
-                      value-format="yyyy-MM-dd"
                       range-separator="至"
                       :start-placeholder="item.placeholder + '开始日期'"
                       :end-placeholder="item.placeholder + '结束日期'"
                       style="width:100%"
+                      value-format="yyyy-MM-dd"
                     />
                   </el-form-item>
                 </template>
@@ -152,12 +152,12 @@
               <span v-if="exportLoadingStatus" :key="item.name" class="export-tips">短时间内不可重复操作,请您耐心等待。</span>
             </template>
             <template v-else-if="item.label ==='add' || item.label === 'edit'">
-              <el-button :key="index" plain :type="item.label === 'add' ? 'primary' : 'success'" @click="clickAddOrEdit(item.address)">
+              <el-button :key="index" plain :type="item.label === 'add' ? 'primary' : 'success'" @click="clickAddOrEdit(item.address, item.label)">
                 {{ item.name }}
               </el-button>
             </template>
             <template v-else>
-              <el-button :key="index" plain type="primary">
+              <el-button :key="index" plain type="primary" @click="deleteFun">
                 {{ item.name }}
               </el-button>
             </template>
@@ -177,7 +177,14 @@
             highlight-current-row
             :data="listdata"
             style="width: 100%;"
+            @selection-change="handleSelectionChange"
           >
+            <el-table-column
+              v-if="editOrDelBtnFlag.length"
+              type="selection"
+              width="55"
+              align="center"
+            />
             <template v-for="(item, index) in showTableList">
               <listTable v-if="item.child && item.child.length" :key="index" :coloumn-header="item" />
               <el-table-column v-else :key="index" :label="item.title" :prop="item.dataColFieldId" align="center" />
@@ -188,6 +195,8 @@
           :total="total"
           :page.sync="listQuery.page"
           :limit.sync="listQuery.pageSize"
+          :not-page="notPage"
+          :page-count="pageCount"
           @pagination="getReportData"
         />
       </div>
@@ -197,7 +206,7 @@
 
 <script type='text/ecmascript-6'>
 import pagination from '@/components/Pagination'
-import { getReportDetailInfoNew, getListReportData } from '@/api/api'
+import { getReportDetailInfoNew, getListReportData, deleteData } from '@/api/api'
 import { reportDesignExportTable } from '@/utils/export-file.js'
 import listTable from './components/listTable.vue'
 export default {
@@ -224,12 +233,18 @@ export default {
       showTableList: [],
       listdata: [],
       total: 0,
+      notPage: false,
+      pageCount: 1,
+      multipleSelection: [], // 列表选择选中数据
       exportLoadingStatus: false // 导出间隔标识
     }
   },
   computed: {
     checkListBtn: function() {
       return this.layoutdata.checkList.filter(item => item.checked)
+    },
+    editOrDelBtnFlag: function() { // 筛选出是否有编辑和删除按钮， 用来控制显示表格复选框列
+      return this.checkListBtn.filter(item => item.label === 'edit' || item.label === 'delete')
     }
   },
   watch: {},
@@ -247,7 +262,6 @@ export default {
     setTitle(title) {
       document.title = title + ' · 朴新报表'
     },
-
     initData() {
       const rLoading = this.openLoading() // 打开loading
       getReportDetailInfoNew({ reportId: this.reportId }).then(res => { // 获取搜索条件及表头等数据
@@ -301,7 +315,7 @@ export default {
           } */
         }
         if (list.col_type === 'dateTime' || list.col_type === 'date' || list.col_type === 'daterange' || list.col_type === 'time') { // 时间类型
-          rules[list.report_sf_id] = [{ type: 'date', required: list.is_empty, message: '请输入' + list.placeholder, trigger: 'change' }]
+          rules[list.report_sf_id] = [{ required: list.is_empty, message: '请输入' + list.placeholder, trigger: 'change' }]
         } else if (list.col_type === 'checkbox' || list.col_type === 'multiple' || list.col_type === 'filterables') { // 多选类型
           rules[list.report_sf_id] = [{ type: 'array', required: list.is_empty, message: '请输入' + list.placeholder, trigger: 'change' }]
         } else if (list.col_type === 'filterable' || list.col_type === 'select') { // 下拉搜索单选
@@ -335,13 +349,14 @@ export default {
     },
     getReportData() { // 列表数据请求方法
       this.listLoading = true
-      this.listQuery.reportId = this.reportId
+      this.listQuery.reportId = +this.reportId
       this.listQuery.searchParam = this.lookForm // 搜索条件
-
       getListReportData(this.listQuery).then(res => {
         if (res.state === 2000) {
           this.listdata = res.data.data
-          this.total = res.data.count // 总页数
+          this.total = res.data.count // 总数量
+          this.pageCount = res.data.totalPage // 总页数
+          this.notPage = res.data.notPage // 是否是单页表格数据
         } else {
           this.$message.error(res.message)
         }
@@ -368,9 +383,42 @@ export default {
         this.exportLoadingStatus = false
       }, 30 * 1000)
     },
-    clickAddOrEdit(address) { // 点击新增or编辑方法
-      console.log(address)
-      window.open(address, '_blank')
+    clickAddOrEdit(address, type) { // 点击新增or编辑方法
+      console.log(window.location)
+      // window.open(window.location.href, '_blank')
+      if (type === 'add') {
+        window.location.href = address
+      } else {
+        console.log(type)
+        if (this.multipleSelection.length > 1 || this.multipleSelection < 1) {
+          this.$message.error('请选择且只能选择一条需要编辑的数据')
+          return false
+        }
+        window.location.href = address + '?pk=' + this.multipleSelection[0].pk
+      }
+    },
+    handleSelectionChange(val) { // 列表复选框勾选方法
+      this.multipleSelection = val
+      console.log(this.multipleSelection)
+    },
+    deleteFun() { // 删除操作方法
+      console.log(this.multipleSelection)
+      if (!this.multipleSelection.length) {
+        this.$message.error('请先选择要删除的数据')
+        return false
+      }
+      const pk = []
+      this.multipleSelection.map((item, index) => {
+        pk.push(item.pk)
+      })
+      deleteData({ reportId: this.reportId, pk: pk.toString() }).then(res => {
+        if (res.state === 2000) {
+          this.$message.success(res.message)
+          this.getReportData() // 请求表格数据方法
+        } else {
+          this.$message.success(res.message)
+        }
+      })
     }
   }
 }

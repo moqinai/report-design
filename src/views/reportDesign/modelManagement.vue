@@ -2,7 +2,7 @@
   <div class="modeManagement">
     <h3 class="pageTitle">模型管理</h3>
     <div class="filter-container">
-      <!-- <el-form :inline="true" class="manage-class-form">
+      <el-form :inline="true" class="manage-class-form">
         <el-row :gutter="10">
           <el-col
             :xs="8"
@@ -12,7 +12,7 @@
             :xl="3"
           >
             <el-form-item>
-              <el-input v-model="searchLinkName" placeholder="链接名" />
+              <el-input v-model="modelName" placeholder="模型标识" />
             </el-form-item>
           </el-col>
           <el-col :xs="4" :sm="3" :md="2" :lg="2" :xl="1">
@@ -27,7 +27,7 @@
             </el-form-item>
           </el-col>
         </el-row>
-      </el-form> -->
+      </el-form>
     </div>
     <div class="operation-wrap">
       <el-row>
@@ -58,9 +58,10 @@
             align="center"
           />
           <template v-for="(item, index) in showTableList">
-            <el-table-column :key="index" :label="item.title" :prop="item.dataIndex" align="center" />
+            <el-table-column v-if="item.dataIndex === 'is_fill'" :key="index" :formatter="formatter" :label="item.title" :prop="item.dataIndex" align="center" />
+            <el-table-column v-else :key="index" :label="item.title" :prop="item.dataIndex" align="center" />
           </template>
-          <el-table-column label="操作" align="center">
+          <el-table-column label="操作" align="center" width="200px">
             <template slot-scope="scope">
               <el-button
                 type="primary"
@@ -133,6 +134,7 @@ export default {
       editBtnLoading: false,
       startBtnLoading: false,
       stopBtnLoading: false,
+      modelName: '',
       dialogVisible: false, // 模态框
       editShowFormFlag: true, // 新增or编辑区分标识
       multipleSelection: [], // 选中内容
@@ -149,6 +151,7 @@ export default {
         { title: '编号', dataIndex: 'key', key: '' },
         { title: '标识', dataIndex: 'name', key: '' },
         { title: '名称', dataIndex: 'title', key: '' },
+        { title: '是否可填报', dataIndex: 'is_fill', key: '' },
         { title: '创建时间', dataIndex: 'create_time', key: '' },
         { title: '状态', dataIndex: 'status', key: '' }
       ],
@@ -174,7 +177,7 @@ export default {
   },
   created() {
     this.report_source_id = this.$route.query.reportId
-    this.createdViewFun()
+    // this.createdViewFun()
     this.getReportData()
     this.getTables()
   },
@@ -196,6 +199,7 @@ export default {
     getReportData() { // 列表数据请求方法
       this.listLoading = true
       this.listQuery.report_source_id = this.report_source_id
+      this.listQuery.name = this.modelName
       getModelList(this.listQuery).then(res => {
         if (res.state === 2000) {
           this.listdata = res.data.data
@@ -218,9 +222,17 @@ export default {
         })
       })
     },
-    handleSelectionChange(val) {
+    handleSelectionChange(val) { // 列表复选框选择事件
       this.multipleSelection = val
       console.log(this.multipleSelection)
+    },
+    handleFilter() { // 搜索
+      this.listQuery = {
+        nowpage: 1,
+        pageSize: 10,
+        name: this.modelName // 搜索条件
+      }
+      this.getReportData() // 请求表格数据方法
     },
     clickAddFun() { // 新增
       this.modelTitle = '生成模型'
@@ -332,6 +344,10 @@ export default {
           return false
         }
       })
+    },
+    formatter(row, column) {
+      const value = { '0': '否', '1': '是' }
+      return value[row.is_fill]
     }
   }
 }

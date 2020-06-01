@@ -89,7 +89,11 @@
                 <div
                   v-for="(item,index) in dataSetTabHeadTabList"
                   :key="index"
-                  :class="{'tab-active':dataSetTabHeadTabActive === index}"
+                  :class="{
+                    'tab-active':dataSetTabHeadTabActive === index,
+                    'category-index': index === 1 && reportCategory === 2
+                  }"
+
                   @click="dataSetTabHeadClickFun(index)"
                 >
                   {{ item }}
@@ -406,7 +410,6 @@ export default {
       type: Object,
       default: () => {}
     }
-
   },
   data() {
     return {
@@ -490,7 +493,8 @@ export default {
       layoutdata: state => state.reportDesign.layoutdata,
       reportType: state => state.reportDesign.reportType, // 默认form // 预览及设计区域报表类型（目前分表单型form、填报型excel） // 在选中左侧报表时 或者 添加时改变其值
       reportId: state => state.reportDesign.reportId, // 报表id
-      dataId: state => state.reportDesign.dataId // 数据集id
+      dataId: state => state.reportDesign.dataId, // 数据集id
+      reportCategory: state => state.reportDesign.reportCategory // 类型
     }),
 
     disabled() {
@@ -779,7 +783,7 @@ export default {
       e.preventDefault()
 
       if (!this.modelDragIn) {
-        this.$alert('请先拖拽主表', 'tips', {
+        this.$alert('请先拖拽主表', '提示', {
           confirmButtonText: '确定',
           callback: action => {
             this.forbiddenChildePointerEvents = false
@@ -789,6 +793,18 @@ export default {
         })
         return
       }
+      if (this.reportCategory === 2) {
+        this.$alert('填报型暂不允许关联表', '提示', {
+          confirmButtonText: '确定',
+          callback: action => {
+            this.forbiddenChildePointerEvents = false
+            this.unactiveModelItemShow = false
+            this.unactiveModelItem = {}
+          }
+        })
+        return
+      }
+
       if (this.relatedModelList.indexOf(this.moveModelObj) === -1) {
         this.relatedModelList.push(this.moveModelObj)
 
@@ -848,6 +864,9 @@ export default {
     },
 
     dataSetTabHeadClickFun(index) {
+      if (this.reportCategory === 2) {
+        return
+      }
       this.dataSetTabHeadTabActive = index
     },
 
@@ -983,7 +1002,8 @@ export default {
         report_source_id: sourceId,
         nowpage,
         pageSize,
-        modelName
+        modelName,
+        report_category: this.reportCategory
       }
       getModelList(obj).then(res => {
         if (res.state === 2000) {
@@ -1104,6 +1124,11 @@ export default {
         margin-right:18px;
         &.tab-active{
           border-bottom:2px solid #35B9F9;
+        }
+        &.category-index{
+         opacity: 0.3;
+        cursor: not-allowed;
+
         }
       }
     }

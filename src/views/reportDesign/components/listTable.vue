@@ -20,6 +20,7 @@ export default {
     return {
     }
   },
+  created() {},
   methods: {}
 }
 </script>

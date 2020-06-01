@@ -10,6 +10,7 @@
           <img src="./../img/icon_add.png" @click="addReport">
           <img src="./../img/icon_folder.png" @click="addFolder">
           <img src="./../img/icon_trash.png" @click="delReport">
+          <i class="el-icon-s-help" @click="urlAlert" />
         </div>
       </el-col>
     </el-row>
@@ -24,9 +25,14 @@
           :expand-on-click-node="false"
           :check-on-click-node="true"
           get-checked-nodes="getCh"
+          :highlight-current="true"
           @node-click="getDataListFun"
         >
-          <span slot-scope="{node,data}" class="custom-tree-node">
+          <span
+            slot-scope="{node,data}"
+            class="custom-tree-node"
+            :class="{'tree-node-active': data=== treeNodeActive}"
+          >
             <span>
               <img
                 :src="data.type===1
@@ -72,6 +78,13 @@
         <el-button type="primary" @click="dialogFolderConfirm">确 定</el-button>
       </div>
     </el-dialog>
+    <el-dialog
+      title="报表链接"
+      :visible.sync="dialogUrlVisible"
+      :close-on-click-modal="false"
+    >
+      <span>{{ reportUrl }}</span>
+    </el-dialog>
   </div>
 </template>
 <script>
@@ -87,37 +100,10 @@ export default {
   },
   data() {
     return {
-      data1: [
-        {
-          label: '一级 1',
-          type: 'folder',
-          children: [{
-            type: 'report',
-            label: '二级 1-1'
-          }]
-        },
-        {
-          label: '一级 2',
-          type: 'folder',
-          children: [{
-            label: '二级 2-1',
-            type: 'report'
-          }, {
-            label: '二级 2-2',
-            type: 'report'
-          }]
-        }, {
-          label: '一级 3',
-          type: 'folder',
-          children: [{
-            label: '二级 3-1',
-            type: 'report'
+      dialogUrlVisible: false,
+      reportUrl: '',
 
-          }, {
-            label: '二级 3-2',
-            type: 'report'
-          }]
-        }],
+      treeNodeActive: '',
       defaultProps: {
         // label: 'type',
         children: 'child'
@@ -158,6 +144,37 @@ export default {
   },
 
   methods: {
+    urlAlert() {
+      //  dialogUrlVisible: false,
+      // reportUrl: '111111111111111',
+      const nodeData = this.activeTreeNode
+      if (!nodeData.report_id) {
+        this.$message.error('请先选择一个报表')
+        return
+      }
+      if (nodeData.type === 1) {
+        this.$message.error('请先选择一个报表')
+        return
+      }
+      console.log(nodeData)
+      // 2-填报；1-列表；3-综合（本期未做）
+      // reportType 1 填报型
+      if (nodeData.reportType === 2) {
+        this.reportUrl = 'report/ReportDetail/fillReport?reportId=' + nodeData.report_id
+      }
+      // reportType 2 列表型
+      // is_fullScreen  1 全屏
+      //
+      if (nodeData.reportType === 1) {
+        if (nodeData.is_full_screen === 1) {
+          this.reportUrl = 'report/ReportDetail/fullScreenReport/reportId/' + nodeData.report_id
+        } else {
+          this.reportUrl = 'report/ReportDetail/listReport/reportId/' + nodeData.report_id
+        }
+      }
+
+      this.dialogUrlVisible = true
+    },
 
     editReport() {
       // 编辑报表
@@ -190,7 +207,7 @@ export default {
       )
     },
     getDataListFun(data, node) { // 点击我的报表，获取传递的数据
-      console.log(data)
+      this.treeNodeActive = data
       this.activeTreeNode = data
       // data.reportType = 1 // 当前写死填报型。 2-填报；1-列表；3-综合（本期未做）
       //
@@ -346,6 +363,23 @@ export default {
 }
 </script>
 
+<style lang="scss">
+  .el-tree--highlight-current .el-tree-node.is-current>.el-tree-node__content {
+    background: #35B9F9;
+    .custom-tree-node{
+      color:#fff;
+      .tree-node-parent{
+
+          background-image:url('./../img/icon_dsl02.png');
+          // background-size:100% 100%;
+
+        }
+    }
+
+  }
+
+</style>
+
 <style lang="scss" scoped>
 @import '@/styles/mixin.scss';
   .mine-report-container{
@@ -384,10 +418,17 @@ export default {
       img{
         margin-left:5px;
         margin-right:5px;
+        width:16px;
+        height:16px;
         cursor:pointer;
         &:last-child{
           margin-right:0;
         }
+      }
+      i{
+        font-size: 20px;
+        cursor:pointer;
+        color: #409EFF;
       }
     }
 
@@ -414,6 +455,7 @@ export default {
     font-size: 14px;
     color: #666666;
   }
+
   .el-tree /deep/ {
     .el-tree-node__content{
       &:hover{
@@ -429,6 +471,11 @@ export default {
       .custom-tree-node{
         color:#fff;
       }
+
+    }
+    .tree-node-active{
+      color:#fff;
+      background: #35B9F9;
     }
   }
 </style>
