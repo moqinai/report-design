@@ -153,11 +153,8 @@ export default {
       this.getDataListByReportId(this.activeDataReport)
     },
     getReportListNew() {
-      getReportListNew(
-        {
-          pageSize: 1000
-        }
-      ).then(res => {
+      getReportListNew({ pageSize: 1000 }).then(res => {
+        console.log(res)
         this.mineReportData = res.data.data
       })
     },
